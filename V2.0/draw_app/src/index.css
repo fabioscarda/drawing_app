@@ -1,3 +1,18 @@
 canvas{
     border: 1px solid black;
 }
+
+.btn-tool {
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    border-radius: 10px;
+    margin: 5px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.btn-tool-active{
+    border-bottom: 4px solid black;
+}

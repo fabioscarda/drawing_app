@@ -9,7 +9,7 @@ function useDrawing(color: string, size: number){
 
         if(mode === "start"){
             ctx.beginPath();
-            ctx.moveTo(x, y);
+            ctx.moveTo(x, y);            
         } else if(mode === "move"){
             ctx.lineTo(x, y);
             ctx.strokeStyle = color;
