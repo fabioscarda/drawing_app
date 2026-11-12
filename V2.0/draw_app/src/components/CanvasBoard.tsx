@@ -3,36 +3,51 @@ import type { DrawFunction, Tool } from "../types/drawing";
 
 interface CanvasBoardProps {
     draw: DrawFunction;
+    finishDrawing: () => void;
+    redraw: (ctx: CanvasRenderingContext2D) => void;
     width: number;
     height: number;
     tool: Tool;
 }
 
-function CanvasBoard({ draw, width, height, tool }: CanvasBoardProps) {
+function CanvasBoard({ draw, finishDrawing, redraw, width, height, tool }: CanvasBoardProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    // Redraw existing strokes whenever dimensions (width/height) change
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        redraw(ctx);
+    }, [width, height, redraw]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const ctx = canvas.getContext("2d")
+        const ctx = canvas.getContext("2d");
         if (!ctx) return;
         let drawing = false;
 
         const startDrawing = (e: MouseEvent) => {
             drawing = true;
             draw(ctx, e, "start");
-        }
+        };
 
         const drawMove = (e: MouseEvent) => {
             if (!drawing) return;
             draw(ctx, e, "move");
-        }
+        };
 
         const stopDrawing = () => {
-            drawing = false;
-            ctx.beginPath();
-        }
+            if (drawing) {
+                drawing = false;
+                ctx.beginPath();
+                finishDrawing();
+            }
+        };
 
         const getTouchEventAsMouse = (e: TouchEvent, canvas: HTMLCanvasElement): MouseEvent => {
             const touch = e.touches[0] || e.changedTouches[0];
@@ -65,8 +80,11 @@ function CanvasBoard({ draw, width, height, tool }: CanvasBoardProps) {
 
         const stopTouch = (e: TouchEvent) => {
             e.preventDefault();
-            drawing = false;
-            ctx.beginPath();
+            if (drawing) {
+                drawing = false;
+                ctx.beginPath();
+                finishDrawing();
+            }
         };
 
         canvas.addEventListener("mousedown", startDrawing);
@@ -79,7 +97,7 @@ function CanvasBoard({ draw, width, height, tool }: CanvasBoardProps) {
         canvas.addEventListener("touchend", stopTouch, { passive: false });
         canvas.addEventListener("touchcancel", stopTouch, { passive: false });
 
-        canvas.addEventListener("mouseover", (e) => {
+        canvas.addEventListener("mouseover", () => {
             if (tool === "brush") {
                 canvas.style.cursor = "url('img/brush.png'), auto";
             } else if (tool === "eraser") {
@@ -106,9 +124,16 @@ function CanvasBoard({ draw, width, height, tool }: CanvasBoardProps) {
             canvas.removeEventListener("touchend", stopTouch);
             canvas.removeEventListener("touchcancel", stopTouch);
         };
-    }, [draw]);
+    }, [draw, finishDrawing, tool]);
 
-    return <canvas ref={canvasRef} width={width} height={height} />
+    return (
+        <canvas 
+            className="block w-full h-full bg-white cursor-crosshair"
+            ref={canvasRef} 
+            width={width} 
+            height={height} 
+        />
+    );
 }
 
 export default CanvasBoard;
